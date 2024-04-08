@@ -32,11 +32,11 @@ your sensors and servos. */
 // Replace the pin numbers with those you connect to your robot
 
 // Button pins. These will be replaced with the photodiode variables in lab 5
-#define BUTTON_1  A2     // Far left Button - Servo Up
-#define BUTTON_2  A3     // Left middle button - Left Motor
+#define BUTTON_1  A0     // Far left Button - Servo Up
+#define BUTTON_2  A2     // Left middle button - Left Motor
 #define BUTTON_3  A4     // Middle Button - Collision
-#define BUTTON_4  A5     // Right middle button - Right Motor
-#define BUTTON_5  A6     // Far right button - Servo Down
+#define BUTTON_4  A6     // Right middle button - Right Motor
+#define BUTTON_5  A7     // Far right button - Servo Down
 #include "Arduino.h"
 #include <CapacitiveSensor.h>
 #define CAP_SENSOR_SEND     9
@@ -241,30 +241,30 @@ void RobotPerception() {
   // Photodiode Sensing
   //Serial.println(getPinVoltage(BUTTON_2)); //uncomment for debugging
   
-  if (isButtonPushed(BUTTON_2) &&isButtonPushed(BUTTON_4)){
+  if (is_LIGHT(BUTTON_2) &&is_LIGHT(BUTTON_4)){
     SensedLightLeft = DETECTION_YES;
     SensedLightRight=DETECTION_YES;
   }
   else{
-  if (isButtonPushed(BUTTON_2)){
+  if (is_LIGHT(BUTTON_2)){
     SensedLightLeft = DETECTION_YES;
   } else {
     SensedLightLeft = DETECTION_NO;
   }
   // Remember, you can find the buttons and which one goes to what towards the top of the file
-  if (isButtonPushed(BUTTON_4)) { 
+  if (is_LIGHT(BUTTON_4)) { 
     SensedLightRight = DETECTION_YES;
   } else {
     SensedLightRight = DETECTION_NO;
   }}
 
 
-   if (isButtonPushed(BUTTON_1)){
+   if (is_LIGHT(BUTTON_1)){
     SensedLightUp = DETECTION_YES;
   } else {
     SensedLightUp = DETECTION_NO;
   }
-  if (isButtonPushed(BUTTON_5)) { 
+  if (is_LIGHT(BUTTON_5)) { 
     SensedLightDown = DETECTION_YES;
   } else {
     SensedLightDown = DETECTION_NO;
@@ -635,4 +635,12 @@ float pinVoltage(int pin)
 {
   float v_pin = 5.0 * ( (float) analogRead(pin) / 1024.0 );
   return(v_pin);
+}
+float is_LIGHT(int pin){
+if((analogRead(pin)*0.004887585532746823069403714565)>3.2){
+  return true;
+}
+else{
+  return false;
+}
 }
