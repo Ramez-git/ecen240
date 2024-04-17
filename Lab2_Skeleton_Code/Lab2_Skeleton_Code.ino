@@ -44,7 +44,8 @@ your sensors and servos. */
 #define CAP_SENSOR_SAMPLES 40
 #define CAP_SENSOR_TAU_THRESHOLD 25
 #include <Servo.h>
-
+float alpha=.2;
+float prev;
 Servo myservo;
 
 // LED pins (note that digital pins do not need "D" in front of them)
@@ -133,7 +134,7 @@ int SensedLightDown = DETECTION_NO;
 // Capacitive sensor input (using Definitions) - Lab 4
 //int SensedCapacitiveTouch = DETECTION_NO;
 float duration, distance;
-float dis(){
+float dist(){
   digitalWrite(TRIG, LOW);
   delayMicroseconds(2);
   digitalWrite(TRIG, HIGH);
@@ -145,6 +146,10 @@ float dis(){
   Serial.print("Distance: ");
   Serial.println(distance);
   return distance;
+}
+float dis(){
+  prev = alpha*prev + (1-alpha)*dist();
+  return prev;
 }
 /***********************************************************/
 // Global variables that define ACTION and initialization
