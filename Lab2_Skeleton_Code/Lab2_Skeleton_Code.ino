@@ -43,7 +43,9 @@ your sensors and servos. */
 #define CAP_SENSOR_RECEIVE  A1
 #define CAP_SENSOR_SAMPLES 40
 #define CAP_SENSOR_TAU_THRESHOLD 25
+#include <Servo.h>
 
+Servo myservo;
 
 // LED pins (note that digital pins do not need "D" in front of them)
 #define LED_1   6       // Far Left LED - Servo Up
@@ -51,7 +53,8 @@ your sensors and servos. */
 #define LED_3   4       // Middle LED - Collision
 #define H_BRIDGE_ENB   3       // Right Middle LED - Right Motor
 #define LED_5   2       // Far Right LED - Servo Down
-
+#define TRIG 7
+#define ECHO 8
 
 // Motor enable pins - Lab 3
 // These will replace LEDs 2 and 4
@@ -113,7 +116,7 @@ your sensors and servos. */
 #define SERVO_MOVE_STOP 0
 #define SERVO_MOVE_UP   1
 #define SERVO_MOVE_DOWN 2
-
+int pos = 180;
 
 /***********************************************************/
 // Global variables that define PERCEPTION and initialization
@@ -129,8 +132,20 @@ int SensedLightDown = DETECTION_NO;
 
 // Capacitive sensor input (using Definitions) - Lab 4
 //int SensedCapacitiveTouch = DETECTION_NO;
+float duration, distance;
+float dis(){
+  digitalWrite(TRIG, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG, LOW);
 
-
+  duration = pulseIn(ECHO, HIGH);
+  distance = (duration*.0343)/2;
+  Serial.print("Distance: ");
+  Serial.println(distance);
+  return distance;
+}
 /***********************************************************/
 // Global variables that define ACTION and initialization
 
@@ -143,11 +158,13 @@ int ActionRobotDrive = DRIVE_STOP;
 
 // Servo Action (using Definitions)
 int ActionServoMove =  SERVO_MOVE_STOP;
-
+#define ECHO 8
+#define TRIG 7
 /********************************************************************
   SETUP function - this gets executed at power up, or after a reset
  ********************************************************************/
 void setup() {
+  myservo.attach(11);
   //Set up serial connection at 9600 Baud
   Serial.begin(9600);
   
@@ -163,6 +180,8 @@ void setup() {
   pinMode(BUTTON_3, INPUT);
   pinMode(BUTTON_4, INPUT);
   pinMode(BUTTON_5, INPUT);
+  pinMode(ECHO,INPUT);
+  pinMode(TRIG,OUTPUT);
 
 //set up leds for battary stats, resistors used are 120 and 150
 pinMode(A0,INPUT);
@@ -180,6 +199,7 @@ pinMode(10,OUTPUT);
   power off or reset. - Notice: PERCEPTION, PLANNING, ACTION
  ********************************************************************/
  float Motorspeed =0;
+
 void loop() {
   // This DebugStateOutput flag can be used to easily turn on the
   // serial debugging to know what the robot is perceiving and what
@@ -205,7 +225,6 @@ void loop() {
  }}
  Serial.print("motorspeed is:");
  Serial.println(Motorspeed);
-  getbattarystat();
   int DebugStateOutput = true; // Change false to true to debug
   RobotPerception(); // PERCEPTION
   if (DebugStateOutput) {
@@ -241,30 +260,30 @@ void RobotPerception() {
   // Photodiode Sensing
   //Serial.println(getPinVoltage(BUTTON_2)); //uncomment for debugging
   
-  if (is_LIGHT(BUTTON_2) &&is_LIGHT(BUTTON_4)){
+  if (is_LIGHT(A2) &&is_LIGHT(A6)){
     SensedLightLeft = DETECTION_YES;
     SensedLightRight=DETECTION_YES;
   }
   else{
-  if (is_LIGHT(BUTTON_2)){
+  if (is_LIGHT(A6)){
     SensedLightLeft = DETECTION_YES;
   } else {
     SensedLightLeft = DETECTION_NO;
   }
   // Remember, you can find the buttons and which one goes to what towards the top of the file
-  if (is_LIGHT(BUTTON_4)) { 
+  if (is_LIGHT(A2)) { 
     SensedLightRight = DETECTION_YES;
   } else {
     SensedLightRight = DETECTION_NO;
   }}
 
 
-   if (is_LIGHT(BUTTON_1)){
+   if (is_LIGHT(A0)){
     SensedLightUp = DETECTION_YES;
   } else {
     SensedLightUp = DETECTION_NO;
   }
-  if (is_LIGHT(BUTTON_5)) { 
+  if (is_LIGHT(A7)) { 
     SensedLightDown = DETECTION_YES;
   } else {
     SensedLightDown = DETECTION_NO;
@@ -322,7 +341,7 @@ bool isCollision() {
   //In lab 6 you will add a sonar sensor to detect collision and
   // the code for the sonar sensor will go in this function.
   // Until then we will use a button to model the sensor.
-  if (analogRead(BUTTON_3)<900) {
+  if (dis()<=12) {
     return true;
   } else {
     return false;
@@ -550,7 +569,9 @@ void RobotAction() {
                            
       break;
     case COLLISION_ON:
-      doTurnLedOn(LED_3); 
+      doTurnLedOff(H_BRIDGE_ENB);
+      analogWrite(H_BRIDGE_ENA,200);
+      delay(1000);
       break;
   }
   
@@ -588,41 +609,20 @@ void MoveServo() {
   /* Add CurrentServoAngle in lab 6 */
   switch(ActionServoMove) {
     case SERVO_MOVE_STOP:
-      doTurnLedOff(LED_5);
-      doTurnLedOff(LED_1);
-      break;
+     break;
     case SERVO_MOVE_UP:
-      doTurnLedOff(LED_5);
-      doTurnLedOn(LED_1);
+    if(pos<=176){
+      pos+=4;
+      myservo.write(pos);
+      }
       break;
     case SERVO_MOVE_DOWN:
-      doTurnLedOff(LED_1);
-      doTurnLedOn(LED_5);
+        if(pos>114){
+      pos-=4;
+      myservo.write(pos);
+      }
       break;
   }
-}
-void getbattarystat(){
-double x = analogRead(A0)/204.6;
-Serial.print("Here is the voltage:");
-Serial.println(x);
-if(x>4.5){
-  digitalWrite(12,HIGH);
-}
-else{
-  digitalWrite(12,LOW);
-}
-if(x>4){
-  digitalWrite(11,HIGH);
-}
-else{
-  digitalWrite(11,LOW);
-}
-if(x>3.5){
-  digitalWrite(10,HIGH);
-}
-else{
-  digitalWrite(10,LOW);
-}
 }
 
 float computeTau(float measuredTime, float beta)
@@ -637,7 +637,7 @@ float pinVoltage(int pin)
   return(v_pin);
 }
 float is_LIGHT(int pin){
-if((analogRead(pin)*0.004887585532746823069403714565)>3.2){
+if((analogRead(pin)*0.004887585532746823069403714565)>3){
   return true;
 }
 else{
